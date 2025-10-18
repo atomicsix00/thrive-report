@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thrive Retreat - Performance Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+      /* COLOR PALETTE */
+      :root {
+        --bg-off-white: #f8f5f1;
+        --text-ochre-brown: #6b4c35; /* Darker for readability */
+        --accent-ochre-brown: #a9714b;
+        --accent-golden-yellow: #ffc107;
+        --accent-olive-green: #556b2f;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg-off-white);
+        color: var(--text-ochre-brown);
+      }
+
+      .card {
+        background-color: #ffffff;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+          0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+      }
+
+      .kpi-card {
+        padding: 1.5rem;
+        text-align: center;
+      }
+
+      .kpi-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--accent-ochre-brown);
+      }
+
+      .kpi-label {
+        font-size: 0.9rem;
+        color: var(--text-ochre-brown);
+        opacity: 0.8;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-weight: 700;
+        color: var(--text-ochre-brown);
+      }
+
+      .chart-container {
+        position: relative;
+        height: 350px;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body class="p-4 sm:p-6 md:p-8">
+    <div class="max-w-7xl mx-auto">
+      <!-- Header -->
+      <header class="text-center mb-8">
+        <h1 class="text-4xl font-bold">Thrive Retreat: Evaluation Dashboard</h1>
+        <p class="text-lg mt-2 opacity-80">
+          An Analytical Overview of Participants Feedback
+        </p>
+      </header>
+
+      <!-- Executive Summary & KPIs -->
+      <div class="card p-6 mb-8">
+        <h2 class="text-2xl mb-4">Executive Summary</h2>
+        <div class="grid md:grid-cols-3 gap-6 text-center">
+          <!-- KPIs -->
+          <div class="kpi-card bg-gray-50 rounded-lg">
+            <div id="total-respondents" class="kpi-value">--</div>
+            <div class="kpi-label">Total Respondents</div>
+          </div>
+          <div class="kpi-card bg-gray-50 rounded-lg">
+            <div id="overall-score" class="kpi-value">--</div>
+            <div class="kpi-label">Overall Average Score</div>
+          </div>
+          <div class="kpi-card bg-gray-50 rounded-lg">
+            <div id="engagement-count" class="kpi-value">--</div>
+            <div class="kpi-label">Total Follow-up Requests</div>
+          </div>
+        </div>
+        <div class="mt-6">
+          <h3 class="text-xl mb-3">
+            Key Analytical Insights for Young Professionals
+          </h3>
+          <ul
+            id="key-insights"
+            class="list-disc list-inside space-y-2 opacity-90"
+          >
+            <li>Processing data...</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Detailed Ratings -->
+      <div class="grid lg:grid-cols-5 gap-8">
+        <!-- Left Panel: General & Session Ratings -->
+        <div class="lg:col-span-3 space-y-8">
+          <div class="card p-6">
+            <h2 class="text-2xl mb-4">Overall Performance Ratings</h2>
+            <div class="chart-container">
+              <canvas id="generalRatingsChart"></canvas>
+            </div>
+          </div>
+          <div class="card p-6">
+            <h2 class="text-2xl mb-4">Session Performance Comparison</h2>
+            <div class="chart-container" style="height: 400px">
+              <canvas id="sessionPerformanceChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel: Strengths, Improvements & Engagement -->
+        <div class="lg:col-span-2 space-y-8">
+          <div class="card p-6">
+            <h3 class="text-xl mb-4 text-green-800">Top 3 Strengths</h3>
+            <ul id="top-strengths" class="space-y-2"></ul>
+          </div>
+          <div class="card p-6">
+            <h3 class="text-xl mb-4 text-red-800">
+              Top 3 Areas for Improvement
+            </h3>
+            <ul id="top-improvements" class="space-y-2"></ul>
+          </div>
+          <div class="card p-6">
+            <h2 class="text-2xl mb-4">Participant Next Steps (by Count)</h2>
+            <div class="chart-container" style="height: 280px">
+              <canvas id="engagementChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Qualitative Feedback -->
+      <div class="card p-6 mt-8">
+        <h2 class="text-2xl mb-4">Qualitative Feedback Highlights</h2>
+        <div class="grid md:grid-cols-3 gap-x-8">
+          <div>
+            <h3 class="font-semibold text-lg text-gray-600 mb-2">
+              What is the most Significant Truth you have learned in this
+              retreat?
+            </h3>
+            <div
+              id="significant-truth-comments"
+              class="space-y-2 max-h-80 overflow-y-auto p-2 bg-gray-50 rounded-lg border"
+            ></div>
+          </div>
+          <div>
+            <h3 class="font-semibold text-lg text-gray-600 mb-2">
+              What part/experience did you enjoy the most?
+            </h3>
+            <div
+              id="enjoyed-most-comments"
+              class="space-y-2 max-h-80 overflow-y-auto p-2 bg-gray-50 rounded-lg border"
+            ></div>
+          </div>
+          <div>
+            <h3 class="font-semibold text-lg text-gray-600 mb-2">
+              Other Comments & Suggestions for us to improve?
+            </h3>
+            <div
+              id="other-comments-comments"
+              class="space-y-2 max-h-80 overflow-y-auto p-2 bg-gray-50 rounded-lg border"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const CSV_DATA = `
+ID,Plenary,Breakout Discussions,Workbook,Breakout Experience,Overall Program,Praise & Worship,Facilitators,Registration,Venue,Accommodation,Food,S1 Content,S1 Mastery,S1 Delivery,S1 Questions,S2 Content,S2 Mastery,S2 Delivery,S2 Questions,S3 Content,S3 Mastery,S3 Delivery,S3 Questions,S4 Content,S4 Mastery,S4 Delivery,S4 Questions,S5 Content,S5 Mastery,S5 Delivery,S5 Questions,S6 Content,S6 Mastery,S6 Delivery,S6 Questions,Comment: Significant Truth,Comment: Enjoyed Most,Comment: Other,Help: Know GLC? (1=yes),Help: Small Group? (1=yes),Help: Counsel? (1=yes),Remarks
+1,4,3,3,3,3,4,4,4,4,3,4,4,4,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,"The sessions, the speakers",-,-,-,-,
+2,4,4,4,4,3,4,4,4,3,4,-,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+3,4,4,4,4,3,4,4,2,2,2,2,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,1,1,-,
+4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+5,3,4,4,4,4,4,4,4,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+6,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+7,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+8,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+9,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+10,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+11,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+12,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+13,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+14,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+15,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+16,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+17,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+18,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+19,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+20,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+21,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+22,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+23,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+24,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+25,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+26,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+27,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+28,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+29,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+30,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+31,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+32,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+33,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+34,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+35,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+36,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+37,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+38,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+39,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+40,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+41,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+42,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+43,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+44,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+45,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+46,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+47,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+48,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+49,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+50,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+51,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+52,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+53,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+54,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+55,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+56,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+57,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+58,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+59,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+60,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+61,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+62,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+63,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+64,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+65,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+66,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+67,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+68,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+69,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+70,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+71,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+72,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+73,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+74,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+7a5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+76,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+77,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+78,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+79,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+80,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+81,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,God's Love is Unconditional,Small Group Discussion,-,1,1,1,
+82,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,Sin Separates us from God,"Games, Worship, Sessions",-,1,1,-,
+83,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,We are made for a purpose and God will fulfill that for us as we follow His will,The whole retreat,-,-,1,1,
+84,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,God will meet us where we are,Worship,-,1,-,-,
+85,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,Abide in Him,The sessions and the games,-,1,-,-,
+86,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,God's love is unconditional,The sessions and worship,-,1,-,-,
+87,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,I am God's masterpiece,Games,-,1,-,-,
+88,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,God's loves for His children is unconditional,The sessions and Worship,-,1,-,-,
+89,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,We should abide in Him,Breakout Sessions,-,1,-,-,
+90,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,God is the vine and we are the branches. We must stay connected to Him to bear much fruit.,The sessions,-,1,-,-,
+91,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,God has a great plan for me.,"The sessions, worship and games",-,1,-,-,
+92,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,God's love is unconditional,Worship,-,1,-,-,
+93,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,We are created with a purpose.,"The games, and worship",-,1,-,-,
+94,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,God loves us deeply and unconditionally.,The sessions,-,1,-,-,
+95,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,God has planted in us seeds of greatness.,"The breakout sessions, and games",-,1,-,-,
+96,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,We need to connect to the vine who is God to bear much fruit,Praise and Worship,-,1,-,-,
+97,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,Remain in Him,Worship and games,-,1,-,-,
+98,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,God has put a seed of greatness in us that we need to grow to fulfill His purpose in our lives.,"The games, the worship songs and the food was great.",-,-,-,-,
+99,4,4,4,4,4,4,4,4,4,4,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,God loves me as I am.,Breakout and Amazing Race.,-,-,-,-,
+100,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,"God is the root, through Him well grow stronger and bigger.","P&W, preacher and testimonies",-,1,1,-,
+101,4,4,4,4,4,4,4,4,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,-,-,-,-,-,-,
+102,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,I am loved by God and will continue to love me as I am.,Everything!,-,-,-,-,
+103,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,God's love is unconditional,The sessions,-,-,-,-,
+104,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,God is our only hope.,"Games, and worship",-,-,-,-,
+105,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,The cross is the symbol of God's love.,"Games, and worship",-,-,-,-,
+106,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,I am not my sin.,"The games, and session about the cross",-,-,-,-,
+107,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,We are God's masterpiece,Praise and Worship,-,-,-,-,
+108,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,God's love is never ending.,Breakout sessions,-,-,-,-,
+109,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,Stay connected to God, the true vine.,"Worship, and sessions",-,-,-,-,
+110,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,God loves me.,The sessions,-,-,-,-,
+111,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,God has a purpose for me.,"The sessions, the games, and the worship",-,-,-,-,
+`;
+
+      document.addEventListener("DOMContentLoaded", () => {
+        // --- 1. DATA PARSING & PROCESSING ---
+        function robustCSVParse(csvText) {
+          const lines = csvText.trim().split("\n");
+          const headers = lines[0].split(",").map((h) => h.trim());
+          const data = lines.slice(1).map((line) => {
+            const values = line.split(",");
+            const obj = {};
+            headers.forEach((header, index) => {
+              obj[header] = values[index]
+                ? values[index].trim().replace(/"/g, "")
+                : "";
+            });
+            return obj;
+          });
+          return { headers, data };
+        }
+
+        const { headers, data } = robustCSVParse(CSV_DATA);
+        const validData = data.filter(
+          (row) => row.ID && !isNaN(parseInt(row.ID))
+        );
+        const totalRespondents = validData.length;
+
+        const ratingMetrics = headers.slice(1, 37);
+        const commentMetrics = headers.slice(37, 40);
+        const helpMetrics = headers.slice(40, 43);
+
+        // --- 2. DATA ANALYSIS & AGGREGATION ---
+        const analysis = {};
+        let allScores = [];
+
+        ratingMetrics.forEach((metric) => {
+          // Corrected logic for mapping and filtering scores
+          const scores = validData
+            .map((row) => row[metric])
+            .filter(
+              (value) =>
+                value && value.trim() !== "-" && !isNaN(parseInt(value))
+            )
+            .map((value) => parseInt(value));
+
+          if (scores.length > 0) {
+            allScores.push(...scores);
+            const average = scores.reduce((a, b) => a + b, 0) / scores.length;
+            analysis[metric] = { scores, average };
+          } else {
+            analysis[metric] = { scores: [], average: 0 };
+          }
+        });
+
+        const overallAverage =
+          allScores.length > 0
+            ? allScores.reduce((a, b) => a + b, 0) / allScores.length
+            : 0;
+
+        const engagementData = {
+          "Wants to know GLC": 17,
+          "Wants to Join Small Group": 7,
+          "Needs Counsel": 4,
+        };
+        const totalEngaged = Object.values(engagementData).reduce(
+          (a, b) => a + b,
+          0
+        );
+
+        const sortedMetrics = Object.entries(analysis)
+          .filter((entry) => ratingMetrics.includes(entry[0]))
+          .filter((entry) => !entry[0].includes("Comment"))
+          .sort((a, b) => b[1].average - a[1].average);
+
+        // --- 3. RENDER KPIs & INSIGHTS ---
+        document.getElementById("total-respondents").textContent =
+          totalRespondents;
+        document.getElementById("overall-score").textContent =
+          overallAverage.toFixed(2);
+        document.getElementById("engagement-count").textContent = totalEngaged;
+
+        const insightsList = document.getElementById("key-insights");
+        insightsList.innerHTML = `
+        <li><strong>High-Impact Experience:</strong> The retreat resonated strongly with attendees, achieving an exceptional <strong>${overallAverage.toFixed(
+          2
+        )}/4.00</strong> overall score, confirming its value for young professionals seeking growth.</li>
+        <li><strong>Spiritual Core is a Key Strength:</strong> 'Praise & Worship' (<strong>${analysis[
+          "Praise & Worship"
+        ].average.toFixed(2)}</strong>) and 'Facilitators' (<strong>${analysis[
+          "Facilitators"
+        ].average.toFixed(
+          2
+        )}</strong>) were top-rated, indicating that the relational and spiritual elements are powerful draws.</li>
+        <li><strong>Opportunity in Operations:</strong> The primary areas for improvement are logistical. Focusing on a smoother 'Registration' process (<strong>${analysis[
+          "Registration"
+        ].average.toFixed(
+          2
+        )}</strong>) and enhancing the 'Accommodation' (<strong>${analysis[
+          "Accommodation"
+        ].average.toFixed(
+          2
+        )}</strong>) can significantly elevate the attendee experience.</li>
+        <li><strong>Clear Desire for Deeper Connection:</strong> With <strong>${
+          engagementData["Join Small Group"]
+        }</strong> individuals wanting to join a small group and <strong>${
+          engagementData["Know GLC"]
+        }</strong> wanting to learn more, there's a clear mandate to create post-retreat pathways for community and continued learning.</li>
+    `;
+
+        // Render Strengths and Improvements
+        const renderRankings = (elementId, data, isStrength) => {
+          const list = document.getElementById(elementId);
+          list.innerHTML = data
+            .map(
+              (item) => `
+            <li class="flex justify-between items-center p-2 rounded-md ${
+              isStrength ? "bg-green-50" : "bg-red-50"
+            }">
+                <span class="text-sm">${item[0]}</span>
+                <span class="font-bold text-sm ${
+                  isStrength ? "text-green-700" : "text-red-700"
+                }">${item[1].average.toFixed(2)}</span>
+            </li>
+        `
+            )
+            .join("");
+        };
+        renderRankings("top-strengths", sortedMetrics.slice(0, 3), true);
+        renderRankings(
+          "top-improvements",
+          sortedMetrics.slice(-3).reverse(),
+          false
+        );
+
+        // --- 4. RENDER CHARTS ---
+        const chartColors = {
+          ochre: "rgba(169, 113, 75, 0.8)",
+          ochreBorder: "rgba(169, 113, 75, 1)",
+          yellow: "rgba(255, 193, 7, 0.8)",
+          yellowBorder: "rgba(255, 193, 7, 1)",
+          green: "rgba(85, 107, 47, 0.8)",
+          greenBorder: "rgba(85, 107, 47, 1)",
+          brown: "rgba(107, 76, 53, 0.8)",
+          brownBorder: "rgba(107, 76, 53, 1)",
+        };
+
+        // General Ratings Chart
+        const generalMetrics = headers.slice(1, 12);
+        new Chart(
+          document.getElementById("generalRatingsChart").getContext("2d"),
+          {
+            type: "bar",
+            data: {
+              labels: generalMetrics,
+              datasets: [
+                {
+                  data: generalMetrics.map((m) => analysis[m].average),
+                  backgroundColor: chartColors.ochre,
+                },
+              ],
+            },
+            options: {
+              indexAxis: "y",
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: { x: { beginAtZero: true, min: 3, max: 4 } },
+              plugins: { legend: { display: false } },
+            },
+          }
+        );
+
+        // Session Performance Bar Chart
+        const sessionMetrics = ["Content", "Mastery", "Delivery", "Questions"];
+
+        const sessionLabels = [
+          "S1 Jay Feliciano",
+          "S2 Paolo Perez",
+          "S3 Paolo Perez",
+          "S4 Ptr. Eddie Robles",
+          "S5 Ptr. Paul De Vera",
+          "S6 Jose Robles",
+        ];
+        const sessionDatasets = sessionMetrics.map((metric, index) => {
+          const colors = [
+            chartColors.ochre,
+            chartColors.green,
+            chartColors.yellow,
+            chartColors.brown,
+          ];
+          return {
+            label: metric,
+            data: sessionLabels.map(
+              (_, i) => analysis[`S${i + 1} ${metric}`]?.average || 0
+            ),
+            backgroundColor: colors[index % colors.length],
+          };
+        });
+        new Chart(
+          document.getElementById("sessionPerformanceChart").getContext("2d"),
+          {
+            type: "bar",
+            data: { labels: sessionLabels, datasets: sessionDatasets },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                y: {
+                  beginAtZero: false,
+                  min: 3.5,
+                  max: 4.0,
+                  title: { display: true, text: "Average Score" },
+                },
+                x: { title: { display: true, text: "Retreat Sessions" } },
+              },
+              plugins: {
+                legend: { position: "top" },
+                tooltip: { mode: "index", intersect: false },
+              },
+              interaction: { mode: "index", intersect: false },
+            },
+          }
+        );
+
+        // Engagement Chart
+        new Chart(document.getElementById("engagementChart").getContext("2d"), {
+          type: "bar",
+          data: {
+            labels: Object.keys(engagementData),
+            datasets: [
+              {
+                label: "Number of Participants",
+                data: Object.values(engagementData),
+                backgroundColor: [
+                  chartColors.green,
+                  chartColors.ochre,
+                  chartColors.yellow,
+                ],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 10 } } },
+            plugins: { legend: { display: false } },
+          },
+        });
+
+        // --- 5. RENDER QUALITATIVE FEEDBACK ---
+        const renderComments = (elementId, metricKey) => {
+          const container = document.getElementById(elementId);
+
+          const comments = validData
+            .map((d) => d[metricKey])
+            .filter((c) => c && c.trim() !== "" && c.trim() !== "-");
+
+          const manualComment = {
+            "Comment: Significant Truth": [
+              "Continous Improvement and Always leave room for God to move",
+              "God is always ready to reach",
+              "The truth of the Gospel",
+              "Habitual conversation with the Holy Spirit is important",
+              "God accepts us as we are but won't let us remain as we are",
+              "How I contribute in His pain on the cross",
+              "Salvation is the only way",
+              "True Life is found only in Jesus",
+              "Super blessed",
+              "DGroup",
+              "God's love",
+              "Root first, fruits next.If we want lasting growth, we must grow deeper roots",
+              "Repentance is not just one-time event",
+              "Rooted in God's love",
+              "God has always been there",
+              "To truly thrive, regardless kung nasaang season tayo, we constantly moment by moment draw near Him & depend on him",
+              "No judgement, showing who you are is ok",
+              "That Christ is the true measurement of life",
+              "Good",
+              "Jesus is life!",
+              "Get rooted",
+              "Follow Jesus",
+              "Three days of opportunity to grow in Christ",
+              "John 10:29",
+              "My Burnout can be turned to be devoted",
+              "God's love is not earn",
+              "To root down to rise up!",
+              "Our life doesn't end in accepting God's Love, we have to extend it to others too",
+              "God's unconditional love for us.",
+              "God loves us as we are but will not allow us to remain as we are",
+              "Set a vision on our life",
+              "Jesus is our Saviour",
+              "God is just waiting for me.",
+              "No longer I, but Christ.",
+              "Be rooted to the source, Jesus.",
+              "Unconditional rathers love",
+              "Growing our faith in the Lord means thriving with a community, not alone.",
+              "That serving Jesus can be fun too.",
+              "Jesus is always with us.",
+              "True life begins in knowing and following Christ.",
+              "It is only by Grace of God that we have been saved.",
+              "Being rooted in Christ is what will make us grow and endure in the world that we live in",
+              "I need Jesus to thrive.",
+              "Acknowledge & Recognize God in all aspects.",
+              "To Thrive",
+              "Eye opening and full of realization, recognition and acceptance.",
+              "Jesus is the truth, the way, and the life.",
+              "The word of God is a great reminder.",
+              "I am a sinner, but I am now saved & freed.",
+              "Be satisfied with Jesus",
+              "Less of me, more of God",
+              "One true God",
+              "God is my Father, Jesus is my Saviour, Salvation is my greatest gift I received.",
+              "Life is not storm free, but with God, we are stormproof.",
+              "We are not just called to receive Jesus as Lord and saviour, we are called with mission and to make disciples.",
+              "Jesus is the way, the truth, and the life.",
+              "God doesn't care what we're done, He just wanted us to come home",
+              "God's love is unconditional.",
+              "yung sa games po, medyo paiba-iba yung mechanics. But nag-enjoy naman ako.",
+              "I learn the words of God.",
+              "Endure and focus on God. God's vision has protection.",
+              "Jesus is loving and just.",
+              "There is nothing I can do on earth to be saved, only through Jesus Christ.",
+              "Love of Christ.",
+              "God is love",
+              "To be rooted in Christ.",
+              "Surrender it all to Him.",
+              "God's love leads me to blessings.",
+              "We need to reach out ",
+              "God has a purpose kung bakit Niya ako kinagpo dito.",
+              "God loves me as I am.",
+              "God is the root, through Him well grow stronger and bigger.",
+              "I am loved by God and will continue to love me as I am.",
+              "God is our saviour",
+              "Salvation is the greatest gift from God.",
+              "God's Love",
+              "You are never alone. God loves you always.",
+              "Armor of God",
+            ],
+            "Comment: Enjoyed Most": [
+              "The sessions, the speakers",
+              "Small Group Discussion",
+              "Games, Worship, Sessions",
+              "The whole retreat",
+              "Worship",
+              "The sessions and the games",
+              "The sessions and worship",
+              "Games",
+              "The sessions and Worship",
+              "Breakout Sessions",
+              "The sessions",
+              "The sessions, worship and games",
+              "Worship",
+              "The games, and worship",
+              "The sessions",
+              "The breakout sessions, and games",
+              "Praise and Worship",
+              "Worship and games",
+              "The games, the worship songs and the food was great.",
+              "Breakout and Amazing Race.",
+              "P&W, preacher and testimonies",
+              "Everything!",
+              "The sessions",
+              "Games, and worship",
+              "Games, and worship",
+              "The games, and session about the cross",
+              "Praise and Worship",
+              "Breakout sessions",
+              "Worship, and sessions",
+              "The sessions",
+              "The sessions, the games, and the worship",
+            ],
+            "Comment: Other": [
+              "Program did great",
+              "Smaller tables, to better talk to each other, saka magkakasama sa room yung BO group",
+              "Medyo masikip lang sa hall and sa rooms, bawi po kayo sa tulog mga volunteers",
+              "Needs improvement in food & accomodation",
+              "Delays in lyrics in p&w",
+              "It's quite hard to leave messages in the pots. we know most of them by their nicknames, some names are different from their full names.",
+              "Give a playlist",
+            ],
+          };
+
+          console.log("zxc validData ==> ", validData);
+          console.log(`zxc comments ${metricKey} ==> `, comments);
+
+          if (manualComment[metricKey].length > 0) {
+            //   if (comments.length > 0) {
+            container.innerHTML = manualComment[metricKey]
+              .map(
+                (c, i) =>
+                  `<div class="p-2.5 rounded-md text-sm opacity-90 ${
+                    i % 2 === 0 ? "bg-white" : "bg-gray-100/60"
+                  }">
+                    <span class="text-gray-400 mr-2">&#8220;</span>${c}<span class="text-gray-400 ml-1">&#8221;</span>
+                </div>`
+              )
+              .join("");
+          } else {
+            container.innerHTML = `<p class="text-sm text-gray-400 p-3">No comments provided.</p>`;
+          }
+        };
+        renderComments(
+          "significant-truth-comments",
+          "Comment: Significant Truth"
+        );
+        renderComments("enjoyed-most-comments", "Comment: Enjoyed Most");
+        renderComments("other-comments-comments", "Comment: Other");
+      });
+    </script>
+  </body>
+</html>
